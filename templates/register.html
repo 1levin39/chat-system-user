@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>注册 - 聊天交友系统</title>
+    <style>
+        .box { width: 350px; margin: 50px auto; text-align: center; }
+        input { width: 100%; padding: 8px; margin: 8px 0; }
+        button { width: 100%; padding: 10px; background: #2196F3; color: white; border: none; }
+        .tip { color: red; }
+        a { display: block; margin-top: 10px; color: #4CAF50; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h2>聊天交友系统 - 注册</h2>
+        {% for msg in get_flashed_messages() %}
+            <div class="tip">{{ msg }}</div>
+        {% endfor %}
+        <form method="POST" action="/register">
+            <input type="text" name="phone" placeholder="11位手机号" required><br>
+            <input type="text" name="nickname" placeholder="2-8位昵称" required><br>
+            <input type="text" name="tag1" placeholder="兴趣标签1（2-4字，如电影）" required><br>
+            <input type="text" name="tag2" placeholder="兴趣标签2" required><br>
+            <input type="text" name="tag3" placeholder="兴趣标签3" required><br>
+            <input type="password" name="password" placeholder="6-12位密码" required><br>
+            <input type="password" name="confirm_pwd" placeholder="再输一次密码" required><br>
+            <button type="submit">注册</button>
+        </form>
+        <a href=" ">已有账号？点这登录</a >
+    </div>
+</body>
+</html>

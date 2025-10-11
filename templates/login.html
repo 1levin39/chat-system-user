@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>登录 - 聊天交友系统</title>
+    <style>
+        /* 简单样式，让页面居中好看点 */
+        .box { width: 350px; margin: 100px auto; text-align: center; }
+        input { width: 100%; padding: 8px; margin: 8px 0; }
+        button { width: 100%; padding: 10px; background: #4CAF50; color: white; border: none; }
+        .tip { color: red; }  /* 错误提示红色 */
+        a { display: block; margin-top: 10px; color: #2196F3; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h2>聊天交友系统 - 登录</h2>
+        <!-- 显示错误/成功提示（比如“密码错了”） -->
+        {% for msg in get_flashed_messages() %}
+            <div class="tip">{{ msg }}</div>
+        {% endfor %}
+        <!-- 登录表单，点提交会把数据发给/login -->
+        <form method="POST" action="/login">
+            <input type="text" name="phone" placeholder="请输11位手机号" required><br>
+            <input type="password" name="password" placeholder="请输6-12位密码" required><br>
+            <button type="submit">登录</button>
+        </form>
+        <!-- 跳注册页的链接，假设注册页面路由为/register -->
+        <a href="/register">还没账号？点这注册</a>
+    </div>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>个人中心 - 聊天交友系统</title>
+    <style>
+        .box { width: 400px; margin: 80px auto; text-align: center; }
+        .info { margin: 20px 0; font-size: 18px; }
+        .tag { background: #f0f0f0; padding: 5px 10px; margin: 0 5px; }
+        .tip { color: red; }
+        input { width: 100%; padding: 8px; margin: 8px 0; }
+        button { padding: 8px 20px; margin: 0 5px; }
+        .change-btn { background: #4CAF50; color: white; border: none; }
+        .logout-btn { background: #f44336; color: white; border: none; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h2>个人中心</h2>
+        {% for msg in get_flashed_messages() %}
+            <div class="tip">{{ msg }}</div>
+        {% endfor %}
+        <!-- 显示用户信息 -->
+        <div class="info">
+            <p>昵称：{{ nickname }}</p >
+            <p>兴趣标签：
+                {% for tag in tags %}
+                    <span class="tag">{{ tag }}</span>
+                {% endfor %}
+            </p >
+        </div>
+        <!-- 修改密码表单 -->
+        <form method="POST" action="/change_pwd">
+            <input type="password" name="old_pwd" placeholder="原密码" required><br>
+            <input type="password" name="new_pwd" placeholder="新密码（6-12位）" required><br>
+            <input type="password" name="confirm_new_pwd" placeholder="确认新密码" required><br>
+            <button type="submit" class="change-btn">修改密码</button>
+        </form>
+        <!-- 退出登录按钮 -->
+        <a href=" "><button class="logout-btn">退出登录</button></a >
+        <!-- 回首页按钮 -->
+        <a href="/"><button>返回首页</button></a >
+    </div>
+</body>
+</html>
