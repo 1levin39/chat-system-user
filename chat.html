@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>好友聊天 - {{ nickname }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        body {
+            background-color: #f5f5f5;
+        }
+        /* 顶部导航栏 */
+        .navbar {
+            background-color: #007bff;
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .navbar h2 {
+            font-size: 20px;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .user-nickname {
+            font-weight: bold;
+        }
+        .logout-btn {
+            color: white;
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            background-color: #0056b3;
+        }
+        .logout-btn:hover {
+            background-color: #003d82;
+        }
+
+        /* 聊天主容器 */
+        .chat-container {
+            display: flex;
+            width: 100%;
+            height: calc(100vh - 60px);
+            max-width: 1400px;
+            margin: 0 auto;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        }
+
+        /* 左侧好友列表区 */
+        .friend-list-panel {
+            width: 300px;
+            border-right: 1px solid #eee;
+            display: flex;
+            flex-direction: column;
+        }
+        .search-bar {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .search-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            font-size: 14px;
+            outline: none;
+        }
+        .search-input:focus {
+            border-color: #007bff;
+        }
+        .search-result {
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 0 15px;
+            display: none;
+        }
+        .search-result-item {
+            padding: 10px;
+            border-bottom: 1px solid #f5f5f5;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .search-result-item:hover {
+            background-color: #fafafa;
+        }
+        .add-friend-btn {
+            padding: 5px 10px;
+            font-size: 12px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .add-friend-btn:hover {
+            background-color: #218838;
+        }
+        .friend-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 0;
+        }
+        .friend-item {
+            padding: 12px 15px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .friend-item:hover {
+            background-color: #f5f5f5;
+        }
+        .friend-item.active {
+            background-color: #e9f5ff;
+            border-left: 3px solid #007bff;
+        }
+        .friend-info {
+            display: flex;
+            flex-direction: column;
+        }
+        .friend-nickname {
+            font-size: 16px;
+            color: #333;
+        }
+        .friend-status {
+            font-size: 12px;
+            margin-top: 3px;
+        }
+        .status-online {
+            color: #28a745;
+        }
+        .status-offline {
+            color: #6c757d;
+        }
+        .no-friends {
+            text-align: center;
+            padding: 50px 0;
+            color: #666;
+            font-size: 14px;
+        }
+
+        /* 右侧聊天窗口区 */
+        .chat-window {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            display: none;
+        }
+        .chat-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+        }
+        .chat-header h3 {
+            font-size: 18px;
+            color: #333;
+        }
+        .chat-header .friend-status {
+            margin-left: 10px;
+        }
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background-color: #fafafa;
+        }
+        .message {
+            margin-bottom: 15px;
+            max-width: 70%;
+            padding: 10px 15px;
+            border-radius: 8px;
+            line-height: 1.5;
+            position: relative;
+        }
+        .message-sent {
+            background-color: #007bff;
+            color: white;
+            margin-left: auto;
+        }
+        .message-received {
+            background-color: white;
+            color: #333;
+            border: 1px solid #eee;
+            margin-right: auto;
+        }
+        .message-content {
+            font-size: 15px;
+        }
+        .message-emoji {
+            font-size: 24px;
+        }
+        .message-meta {
+            font-size: 12px;
+            margin-top: 5px;
+            opacity: 0.8;
+            text-align: right;
+        }
+        .chat-input-area {
+            padding: 15px 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .emoji-trigger {
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+        .emoji-panel {
+            position: absolute;
+            bottom: 80px;
+            left: 20px;
+            background-color: white;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            padding: 10px;
+            display: none;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            z-index: 100;
+        }
+        .emoji-item {
+            font-size: 24px;
+            cursor: pointer;
+            text-align: center;
+            padding: 5px;
+        }
+        .emoji-item:hover {
+            background-color: #f5f5f5;
+            border-radius: 3px;
+        }
+        .message-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            font-size: 15px;
+            resize: none;
+            outline: none;
+            height: 50px;
+            max-height: 150px;
+        }
+        .message-input:focus {
+            border-color: #007bff;
+        }
+        .send-btn {
+            padding: 12px 25px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 15px;
+            cursor: pointer;
+        }
+        .send-btn:hover {
+            background-color: #0056b3;
+        }
+
+        /* 提示框 */
+        .toast {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 5px;
+            color: white;
+            font-size: 14px;
+            z-index: 1000;
+            display: none;
+        }
+        .toast-success {
+            background-color: #28a745;
+        }
+        .toast-error {
+            background-color: #dc3545;
+        }
+        .toast-info {
+            background-color: #17a2b8;
+        }
+
+        /* 空聊天窗口提示 */
+        .empty-chat-tip {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #666;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <div class="navbar">
+        <h2>聊天交友系统</h2>
+        <div class="user-info">
+            <span class="user-nickname">当前用户: {{ nickname }}</span>
+            <a href="/logout" class="logout-btn">退出登录</a>
+        </div>
+    </div>
+
+    <!-- 聊天主容器 -->
+    <div class="chat-container">
+        <!-- 左侧好友列表区 -->
+        <div class="friend-list-panel">
+            <div class="search-bar">
+                <label for="friend-search-input" style="display:none;">搜索好友昵称</label>
+                <input type="text" class="search-input" placeholder="搜索好友昵称..." id="friend-search-input">
+                <div class="search-result" id="search-result-panel"></div>
+            </div>
+            <div class="friend-list" id="friend-list-container">
+                {% if friends|length == 0 %}
+                    <div class="no-friends">暂无好友，搜索添加吧～</div>
+                {% else %}
+                    {% for friend in friends %}
+                        <div class="friend-item" data-friend-id="{{ friend.friend_id }}" data-friend-nickname="{{ friend.friend_nickname }}">
+                            <div class="friend-info">
+                                <div class="friend-nickname">{{ friend.friend_nickname }}</div>
+                                <div class="friend-status {% if friend.status == 'online' %}status-online{% else %}status-offline{% endif %}">
+                                    {% if friend.status == 'online' %}在线{% else %}离线{% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 右侧聊天窗口区 -->
+        <div class="chat-window" id="chat-window">
+            <div class="chat-header" id="chat-header">
+                <h3 id="current-friend-nickname"></h3>
+                <div class="friend-status" id="current-friend-status"></div>
+            </div>
+            <div class="chat-messages" id="chat-messages-container">
+                <!-- 空聊天提示 -->
+                <div class="empty-chat-tip" id="empty-chat-tip">选择好友开始聊天吧～</div>
+                <!-- 聊天记录将动态渲染 -->
+            </div>
+            <!-- 表情面板 -->
+            <div class="emoji-panel" id="emoji-panel">
+                <div class="emoji-item" data-emoji="emoji_1">😊</div>
+                <div class="emoji-item" data-emoji="emoji_2">😂</div>
+                <div class="emoji-item" data-emoji="emoji_3">❤️</div>
+                <div class="emoji-item" data-emoji="emoji_4">👍</div>
+                <div class="emoji-item" data-emoji="emoji_5">🎉</div>
+                <div class="emoji-item" data-emoji="emoji_6">😢</div>
+                <div class="emoji-item" data-emoji="emoji_7">😠</div>
+                <div class="emoji-item" data-emoji="emoji_8">🤔</div>
+                <div class="emoji-item" data-emoji="emoji_9">👏</div>
+                <div class="emoji-item" data-emoji="emoji_10">🌟</div>
+            </div>
+            <div class="chat-input-area">
+                <div class="emoji-trigger" id="emoji-trigger">😀</div>
+                <label for="message-input" style="display: none;">输入消息</label>
+                <textarea class="message-input" id="message-input" placeholder="输入消息（不超过200字符）" maxlength="200"></textarea>
+                <button class="send-btn" id="send-message-btn">发送</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 提示框 -->
+    <div class="toast" id="toast"></div>
+
+    <!-- SocketIO客户端库 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.1/socket.io.min.js"></script>
+    <script>
+        // 全局变量
+        const user_id = {{ user_id }};
+        const user_nickname = "{{ nickname }}";
+        let current_friend_id = null;
+        let current_friend_nickname = null;
+        const emojiMap = {
+            'emoji_1': '😊', 'emoji_2': '😂', 'emoji_3': '❤️', 'emoji_4': '👍', 'emoji_5': '🎉',
+            'emoji_6': '😢', 'emoji_7': '😠', 'emoji_8': '🤔', 'emoji_9': '👏', 'emoji_10': '🌟'
+        };
+
+        // DOM元素
+        const socket = io.connect(`http://${document.domain}:${location.port}`);
+        const friendListContainer = document.getElementById('friend-list-container');
+        const chatWindow = document.getElementById('chat-window');
+        const chatHeader = document.getElementById('chat-header');
+        const currentFriendNicknameEl = document.getElementById('current-friend-nickname');
+        const currentFriendStatusEl = document.getElementById('current-friend-status');
+        const chatMessagesContainer = document.getElementById('chat-messages-container');
+        const emptyChatTip = document.getElementById('empty-chat-tip');
+        const messageInput = document.getElementById('message-input');
+        const sendMessageBtn = document.getElementById('send-message-btn');
+        const emojiTrigger = document.getElementById('emoji-trigger');
+        const emojiPanel = document.getElementById('emoji-panel');
+        const toast = document.getElementById('toast');
+        const friendSearchInput = document.getElementById('friend-search-input');
+        const searchResultPanel = document.getElementById('search-result-panel');
+
+        // ---------------------- 初始化 ----------------------
+        window.onload = function() {
+            // 30秒刷新一次好友状态
+            setInterval(refreshFriendStatus, 30000);
+            // 初始刷新一次
+            refreshFriendStatus();
+
+            // 初始化搜索功能
+            initSearchFunction();
+        };
+
+        // 初始化搜索功能
+        function initSearchFunction() {
+            friendSearchInput.addEventListener('input', function(e) {
+                const keyword = e.target.value.trim();
+                if (keyword.length < 2) {
+                    searchResultPanel.style.display = 'none';
+                    return;
+                }
+
+                socket.emit('search_friend', keyword);
+            });
+
+            // 搜索结果点击事件委托
+            searchResultPanel.addEventListener('click', function(e) {
+                const addBtn = e.target.closest('.add-friend-btn');
+                if (addBtn) {
+                    const friendId = parseInt(addBtn.dataset.friendId);
+                    socket.emit('add_friend', friendId);
+                }
+            });
+        }
+
+        // ---------------------- 提示框工具函数 ----------------------
+        function showToast(msg, type = 'info') {
+            toast.textContent = msg;
+            toast.className = `toast toast-${type}`;
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+
+        // ---------------------- 好友列表相关 ----------------------
+        // 选择好友开始聊天
+        friendListContainer.addEventListener('click', function(e) {
+            const friendItem = e.target.closest('.friend-item');
+            if (!friendItem) return;
+
+            // 更新选中状态
+            document.querySelectorAll('.friend-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            friendItem.classList.add('active');
+
+            // 设置当前聊天好友
+            current_friend_id = parseInt(friendItem.dataset.friend_id);
+            current_friend_nickname = friendItem.dataset.friend_nickname;
+
+            // 更新聊天窗口标题
+            currentFriendNicknameEl.textContent = current_friend_nickname;
+            const statusText = friendItem.querySelector('.friend-status').textContent;
+            currentFriendStatusEl.textContent = `(${statusText})`;
+            currentFriendStatusEl.className = `friend-status ${statusText === '在线' ? 'status-online' : 'status-offline'}`;
+
+            // 显示聊天窗口
+            chatWindow.style.display = 'flex';
+            // 加载聊天历史记录
+            loadChatHistory();
+        });
+
+        // 刷新好友状态
+        function refreshFriendStatus() {
+            socket.emit('refresh_friend_status');
+        }
+
+        // 接收好友状态刷新结果
+        socket.on('friend_status_list', function(data) {
+            if (data.msg !== '状态刷新成功') {
+                showToast(data.msg, 'error');
+                return;
+            }
+
+            const friends = data.friends;
+            // 更新好友列表状态
+            friends.forEach(friend => {
+                const friendItem = document.querySelector(`.friend-item[data-friend-id="${friend.friend_id}"]`);
+                if (friendItem) {
+                    const statusEl = friendItem.querySelector('.friend-status');
+                    statusEl.textContent = friend.status === 'online' ? '在线' : '离线';
+                    statusEl.className = `friend-status ${friend.status === 'online' ? 'status-online' : 'status-offline'}`;
+
+                    // 如果当前聊天的是该好友，更新聊天窗口状态
+                    if (current_friend_id === friend.friend_id) {
+                        currentFriendStatusEl.textContent = `(${friend.status === 'online' ? '在线' : '离线'})`;
+                        currentFriendStatusEl.className = `friend-status ${friend.status === 'online' ? 'status-online' : 'status-offline'}`;
+                    }
+                }
+            });
+        });
+
+        // 接收好友状态变化通知（实时）
+        socket.on('friend_status_change', function(data) {
+            const friendItem = document.querySelector(`.friend-item[data-friend-id="${data.user_id}"]`);
+            if (friendItem) {
+                const statusEl = friendItem.querySelector('.friend-status');
+                statusEl.textContent = data.status === 'online' ? '在线' : '离线';
+                statusEl.className = `friend-status ${data.status === 'online' ? 'status-online' : 'status-offline'}`;
+
+                // 如果当前聊天的是该好友，更新聊天窗口状态
+                if (current_friend_id === data.user_id) {
+                    currentFriendStatusEl.textContent = `(${data.status === 'online' ? '在线' : '离线'})`;
+                    currentFriendStatusEl.className = `friend-status ${data.status === 'online' ? 'status-online' : 'status-offline'}`;
+                }
+            }
+        });
+
+        // 接收搜索结果
+        socket.on('search_result', function(data) {
+            if (data.count === 0) {
+                searchResultPanel.style.display = 'none';
+                return;
+            }
+
+            let html = '';
+            data.friends.forEach(friend => {
+                html += `
+                    <div class="search-result-item">
+                        <div>
+                            <div>${friend.friend_nickname}</div>
+                            <div style="font-size:12px;color:#666;">
+                                ${friend.tag1 ? '#'+friend.tag1 : ''}
+                                ${friend.tag2 ? '#'+friend.tag2 : ''}
+                                ${friend.tag3 ? '#'+friend.tag3 : ''}
+                            </div>
+                        </div>
+                        <button class="add-friend-btn" data-friend-id="${friend.friend_id}">添加</button>
+                    </div>
+                `;
+            });
+            searchResultPanel.innerHTML = html;
+            searchResultPanel.style.display = 'block';
+        });
+
+        // 接收添加好友结果
+        socket.on('add_friend_success', function(data) {
+            showToast(data.msg, 'success');
+            searchResultPanel.style.display = 'none';
+            friendSearchInput.value = '';
+            // 刷新好友列表
+            loadFriendList();
+        });
+
+        socket.on('add_friend_error', function(data) {
+            showToast(data.msg, 'error');
+        });
+
+        // 接收新好友通知
+        socket.on('new_friend_notify', function(data) {
+            showToast(`新好友：${data.friend_nickname}`, 'success');
+            // 刷新好友列表
+            refreshFriendStatus();
+            loadFriendList();
+        });
+
+        // 重新加载好友列表
+        function loadFriendList() {
+            fetch('/chat')
+                .then(response => response.text())
+                .then(html => {
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = html;
+                    const newFriendList = tempDiv.querySelector('#friend-list-container').innerHTML;
+                    friendListContainer.innerHTML = newFriendList;
+                })
+                .catch(error => {
+                    showToast('好友列表加载失败', 'error');
+                });
+        }
+
+        // ---------------------- 聊天相关 ----------------------
+        // 加载聊天历史记录
+        function loadChatHistory() {
+            if (!current_friend_id) return;
+
+            // 显示加载中
+            emptyChatTip.textContent = '加载聊天记录中...';
+            emptyChatTip.style.display = 'flex';
+
+            socket.emit('get_chat_history', { friend_id: current_friend_id });
+        }
+
+        // 接收聊天历史记录
+        socket.on('chat_history', function(data) {
+            const history = data.history;
+            chatMessagesContainer.innerHTML = '';
+
+            if (history.length === 0) {
+                emptyChatTip.textContent = '暂无聊天记录，开始聊天吧～';
+                emptyChatTip.style.display = 'flex';
+                return;
+            }
+
+            // 隐藏空提示
+            emptyChatTip.style.display = 'none';
+
+            // 渲染每条消息
+            history.forEach(msg => {
+                renderMessage(msg);
+            });
+
+            // 滚动到最新消息
+            scrollToBottom();
+
+            // 标记未读消息为已读
+            history.forEach(msg => {
+                if (msg.receiver_id === user_id && msg.is_read === 0) {
+                    socket.emit('mark_message_read', msg.message_id);
+                }
+            });
+        });
+
+        // 渲染单条消息
+        function renderMessage(msg) {
+            const isSent = msg.sender_id === user_id;
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isSent ? 'message-sent' : 'message-received'}`;
+            messageDiv.dataset.message_id = msg.message_id;
+
+            // 消息内容（文字/表情）
+            let contentHtml = '';
+            if (msg.message_type === 'text') {
+                contentHtml = `<div class="message-content">${msg.content}</div>`;
+            } else if (msg.message_type === 'emoji') {
+                contentHtml = `<div class="message-emoji">${emojiMap[msg.content] || msg.content}</div>`;
+            }
+
+            // 消息元数据（时间+已读状态）
+            const readText = isSent ? (msg.is_read ? '已读' : '未读') : '';
+            const metaHtml = `<div class="message-meta">${msg.send_time} ${readText}</div>`;
+
+            messageDiv.innerHTML = contentHtml + metaHtml;
+            chatMessagesContainer.appendChild(messageDiv);
+        }
+
+        // 发送文字消息
+        function sendTextMessage() {
+            const content = messageInput.value.trim();
+            if (!content) {
+                showToast('消息内容不能为空', 'error');
+                return;
+            }
+            if (content.length > 200) {
+                showToast('消息不能超过200字符', 'error');
+                return;
+            }
+            if (!current_friend_id) {
+                showToast('请先选择聊天好友', 'error');
+                return;
+            }
+
+            // 发送消息
+            socket.emit('send_message', {
+                receiver_id: current_friend_id,
+                content: content,
+                message_type: 'text'
+            });
+
+            // 清空输入框
+            messageInput.value = '';
+        }
+
+        // 发送表情消息
+        function sendEmojiMessage(emojiCode) {
+            if (!current_friend_id) {
+                showToast('请先选择聊天好友', 'error');
+                return;
+            }
+
+            socket.emit('send_message', {
+                receiver_id: current_friend_id,
+                content: emojiCode,
+                message_type: 'emoji'
+            });
+        }
+
+        // 发送按钮点击事件
+        sendMessageBtn.addEventListener('click', sendTextMessage);
+
+        // 输入框按Enter发送（Shift+Enter换行）
+        messageInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendTextMessage();
+            }
+        });
+
+        // 表情面板切换
+        emojiTrigger.addEventListener('click', function() {
+            emojiPanel.style.display = emojiPanel.style.display === 'block' ? 'none' : 'block';
+        });
+
+        // 点击表情发送
+        emojiPanel.addEventListener('click', function(e) {
+            const emojiItem = e.target.closest('.emoji-item');
+            if (!emojiItem) return;
+
+            const emojiCode = emojiItem.dataset.emoji;
+            sendEmojiMessage(emojiCode);
+            // 隐藏表情面板
+            emojiPanel.style.display = 'none';
+        });
+
+        // 点击页面其他地方隐藏表情面板
+        document.addEventListener('click', function(e) {
+            if (!emojiTrigger.contains(e.target) && !emojiPanel.contains(e.target)) {
+                emojiPanel.style.display = 'none';
+            }
+        });
+
+        // 接收新消息
+        socket.on('new_message', function(msg) {
+            // 隐藏空提示
+            emptyChatTip.style.display = 'none';
+
+            // 渲染新消息
+            renderMessage(msg);
+            scrollToBottom();
+
+            // 标记为已读
+            socket.emit('mark_message_read', msg.message_id);
+
+            // 如果不是当前聊天好友，显示提示
+            if (current_friend_id !== msg.sender_id) {
+                showToast(`收到${msg.sender_nickname}的新消息`, 'info');
+                // 更新好友列表未读提示（简化为高亮）
+                const friendItem = document.querySelector(`.friend-item[data-friend-id="${msg.sender_id}"]`);
+                if (friendItem) {
+                    friendItem.style.backgroundColor = '#fff3cd';
+                    setTimeout(() => {
+                        friendItem.style.backgroundColor = '';
+                    }, 5000);
+                }
+            }
+        });
+
+        // 接收消息送达通知
+        socket.on('message_delivered', function(data) {
+            const messageDiv = document.querySelector(`.message[data-message-id="${data.message_id}"] .message-meta`);
+            if (messageDiv) {
+                const timeText = messageDiv.textContent.split(' ')[0];
+                messageDiv.textContent = `${timeText} ${data.msg}`;
+            }
+        });
+
+        // 接收消息已读通知
+        socket.on('message_read', function(data) {
+            const messageDiv = document.querySelector(`.message[data-message-id="${data.message_id}"] .message-meta`);
+            if (messageDiv) {
+                const timeText = messageDiv.textContent.split(' ')[0];
+                messageDiv.textContent = `${timeText} 已读`;
+            }
+            showToast(data.msg, 'info');
+        });
+
+        // 接收消息错误
+        socket.on('message_error', function(data) {
+            showToast(data.msg, 'error');
+        });
+
+        // 接收历史记录错误
+        socket.on('history_error', function(data) {
+            showToast(data.msg, 'error');
+            emptyChatTip.textContent = '历史记录加载失败，请重试';
+        });
+
+        // 接收状态刷新错误
+        socket.on('status_error', function(data) {
+            showToast(data.msg, 'error');
+        });
+
+        // 接收搜索错误
+        socket.on('search_error', function(data) {
+            showToast(data.msg, 'error');
+        });
+
+        // 接收连接结果
+        socket.on('connect_success', function(data) {
+            showToast(data.msg, 'success');
+        });
+
+        socket.on('connect_failed', function(data) {
+            showToast(data.msg, 'error');
+            setTimeout(() => {
+                window.location.href = '/login';
+            }, 2000);
+        });
+
+        // 滚动到最新消息
+        function scrollToBottom() {
+            chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+        }
+    </script>
+</body>
+</html>
